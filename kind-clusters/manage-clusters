@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+IFS=$'\n\t'
+
+kubeconfig_file="/tmp/flux2-lab-kube-config"
+
+kind_create_local_kind_clusters() {
+
+kind create cluster \
+  --kubeconfig "${kubeconfig_file}" \
+  --config ./config/kind-cluster-staging.yaml \
+  --wait 5m \
+  --name staging
+
+kind create cluster \
+  --kubeconfig "${kubeconfig_file}" \
+  --config ./config/kind-cluster-production.yaml \
+  --wait 5m \
+  --name production
+
+}
+
+kind_delete_local_kind_clusters() {
+  echo " 🧩 Deleting the KIND clusters"
+  kind delete cluster --name staging
+  kind delete cluster --name production
+}
+
+if [ $# -ne 1 ]; then
+  echo "The script takes one argument:"
+  echo "create    - To create a clusters"
+  echo "delelete  - To delete a clusters"
+fi
+
+case "${1}" in
+  create)
+    kind_create_local_kind_clusters
+    ;;
+  delete)
+    kind_delete_local_kind_clusters
+    ;;
+  *)
+    echo "Unknown command:"
+    echo "$@"
+    echo "Abort!"
+    exit 1
+    ;;
+esac
+
